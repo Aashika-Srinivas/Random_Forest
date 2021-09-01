@@ -1,0 +1,758 @@
+---
+title: "DDMO Project_GroupD"
+author: "Aashika Srinivas, Ashika Dev Teres, Christian Ndukwe, Ravi Sankar"
+date: "7/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#LOADING LIBRARIES NEEDED#
+
+```{r}
+## Loading libraries
+if (!require(pastecs)) {
+  install.packages("pastecs")
+}
+## Loading required package: pastecs
+if (!require(tidyverse)) {
+  install.packages("tidyverse")
+}
+if (!require(randomForest)) {
+  install.packages("randomForest")
+}
+if (!require(SPOT)) {
+  install.packages("SPOT")
+}
+## Loading required package: SPOT
+if (!require(ggplot2)) {
+  install.packages("ggplot2")
+}
+if (!require(SPOT)) {
+  install.packages("SPOT")
+}
+if (!require(gridExtra)) {
+  install.packages("grid")
+}
+if (!require(gridExtra)) {
+  install.packages("grid")
+}
+if (!require(ROCR)) {
+  install.packages("ROCR")
+}
+if (!require(caret)) {
+  install.packages("caret")
+}
+if (!require(ggcorrplot)) {
+  install.packages("ggcorrplot")
+}
+library(pastecs)
+library(tidyverse)
+library(randomForest)
+library(SPOT)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library("OpenML")
+library("mlr")
+library(ROCR)
+library(caret)
+library(ggplot2)
+library(ggcorrplot)
+```
+
+
+#RANDOM FOREST PACKAGE#
+```{r}
+task.type <- "classif"
+model <- "randomForest"
+learner <- paste(task.type, model, sep= ".")
+print(getParamSet(learner))
+```
+
+#VARIABLE IMPORTANCE#
+```{r load data }
+#loading data from dataframe to csv
+impdata <- load("LOCATION TO RFimportance2.rdata")
+write.csv(df2,"LOCATION TO SAVE RFImp.csv", row.names = FALSE)
+#Using from csv
+impdata <- read.csv(file = 'LOCATION TO RFImp.csv',header=TRUE)
+head(impdata)
+dim(impdata)
+```
+
+```{r Visualization before RF}
+impdata <- data.matrix(impdata)
+impdata
+
+impdata <- cor(impdata)
+ggcorrplot(impdata, lab = TRUE)
+ggcorrplot(impdata, hc.order = TRUE, lab = TRUE)
+```
+
+```{r Partitioned Data}
+set.seed(150)
+split = sample.split(df2, SplitRatio = 0.70)
+ 
+# Create training and testing sets
+train = subset(df2, split == TRUE)
+test = subset(df2, split == FALSE)
+```
+
+```{r RF Model}
+library(randomForest)
+set.seed(222)
+rf <- randomForest(out~.,data = train,
+                   ntree=300,
+                   mtry=16,
+                   importance=TRUE,
+                   proximity=TRUE)
+print(rf)
+```
+
+```{r Variable Importance}
+varImpPlot(rf,
+           sort=T,
+           main= "Variable Importance")
+```
+
+```{r Extract single tree}
+
+getTree(rf, 1, labelVar = TRUE)
+```
+
+#CLASSIFICATION PROJECT#
+
+##Importing Datasets##
+```{r}
+train_set <- read.csv("LOCATION TO training.csv", dec =".",  sep =';', header=T)
+prelim_set <- read.csv("LOCATION TO preliminaryTestData.csv", dec =".",  sep =';', header=T)
+
+
+task <- makeClassifTask(data = train_set, target= "Y", positive = "S")
+train_set <- transform(train_set, Y = as.factor(Y))
+
+
+task_vali <- makeClassifTask(data = prelim_set, target= "Y", positive = "S")
+prelim_set <- transform(prelim_set, Y = as.factor(Y))
+
+
+full_train_set <- rbind(train_set, prelim_set)  #combining datasets
+task <- makeClassifTask(data = full_train_set, target= "Y", positive = "S")
+
+#boxplot(train_set[-c(1)], col = rainbow(ncol(train_set[-c(1)])), main="Box Plot of all data")
+
+test_set <- read.csv("LOCATION TO finalTestData.csv", dec =".",  sep =';', header=T)
+test_set <- transform(test_set, Y = as.factor(Y))
+
+```
+
+##Data Visualizations##
+```{r}
+HisXl <- ggplot(data=train_set, aes(x=X1))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X1") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X1")
+
+HisX2 <- ggplot(data=train_set, aes(x=X2))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X2") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X2")
+
+HisX11 <- ggplot(data=train_set, aes(x=X11))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X11") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X11")
+
+HisX12 <- ggplot(data=train_set, aes(x=X12))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X12") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X12")
+
+HisX51 <- ggplot(data=train_set, aes(x=X51))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X51") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X51")
+
+HisX52 <- ggplot(data=train_set, aes(x=X52))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X52") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X52")
+
+HisX111 <- ggplot(data=train_set, aes(x=X111))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X111") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X111")
+
+HisX112 <- ggplot(data=train_set, aes(x=X112))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X112") +  
+  ylab("Frequency") + 
+  theme(legend.position="none")+
+  ggtitle("Histogram of X112")
+
+HisX242<- ggplot(data=train_set, aes(x=X242))+
+  geom_histogram(binwidth=0.2, color="black", aes(fill=Y)) + 
+  xlab("X242") +  
+  ylab("Frequency") + 
+  theme(legend.position="right")+
+  ggtitle("Histogram of X242")
+
+# Plot all visualizations
+grid.arrange(HisXl + ggtitle(""),
+             HisX2 + ggtitle(""),
+             HisX11 + ggtitle(""),
+             HisX12  + ggtitle(""),
+             HisX51  + ggtitle(""),
+             HisX52 + ggtitle(""),
+             HisX111  + ggtitle(""),
+             HisX112  + ggtitle(""),
+             HisX242  + ggtitle(""),
+             nrow = 3,
+             top = textGrob("Frequency Histogram", 
+                            gp=gpar(fontsize=12))
+)
+
+boxplot(train_set[-c(1)], col = rainbow(ncol(train_set[-c(1)])), 
+        main="Box Plot of training data")
+
+ggplot(data = train_set, aes(x = X1, y = X2))+
+  xlab("X1")+
+  ylab("X2") +
+  geom_point(aes(color = Y,shape=Y))+
+  ggtitle("X1 vs x2")
+
+```
+
+
+##PROCEDURE FOLLOWED WITH DATA AS IT IS - WITHOUT DATA PREPARATION##
+
+###Training on the combined data - MANUAL TUNING###
+```{r}
+train_tbl = table(full_train_set$Y)
+test_tbl = table(test_set$Y)
+train_tbl
+test_tbl
+
+set.seed(134)
+rf_final <- randomForest(Y ~ ., data=full_train_set, ntree=1000, mtry=16, nodesize=1, cutoff = c(0.4,0.13), classwt= c(15,1), samplesize= c(440,90), positive ="S")
+rf_final
+
+```
+
+###Prediction on Test set###
+```{r}
+pred <- predict(rf_final, test_set[-1])
+pred <- transform(pred, pred = as.factor(pred))
+Conf_Matr = confusionMatrix(pred$pred, test_set$Y, positive = "S")
+Conf_Matr
+
+CM_class <- Conf_Matr$byClass
+
+Sensitivity <- CM_class[['Sensitivity']]
+Specificity <- CM_class[['Specificity']]
+```
+
+###Balanced Youden Index###
+```{r}
+Youden_Ind = Sensitivity + Specificity - 1
+#Balanced_YI = Sensitivity + Specificity - abs(Sensitivity - Specificity)
+
+BYI = min(Sensitivity, Specificity)
+
+print("Youden Index: ")
+Youden_Ind
+
+print("Balanced Youden Index is: ")
+BYI
+```
+###ROC Plot
+```{r}
+pred_num<-as.numeric(pred$pred)
+act_num<-as.numeric(test_set$Y)
+
+predob <- prediction(pred_num, act_num)
+predob
+perf <- ROCR::performance(predob,"tpr","fpr")
+plot(perf, main = "ROC Plot")
+
+
+abline(a=0,b=1, col = "blue", lty = "dashed", )
+legend(0, 1, legend=c("ROC curve", "AUC curve"),
+       col=c("black", "blue"), lty=1:2, cex=0.8)
+#abline()
+
+```
+
+##PREPARING DATA - WITH REMOVAL OF OUTLIERS OF COLUMNS WITH MANY ZEROES##
+
+##PROCEDURE FOLLOWED FOR USING SPOT##
+
+###Looking at rows zeroes in each dataset###
+```{r}
+##Zero count in Train set##
+train_set.describe = stat.desc(train_set)
+rownames(train_set.describe)[rownames(train_set.describe) == "nbr.null"] = "zeros.count"
+rownames(train_set.describe)[rownames(train_set.describe) == "nbr.val"] = "obs.count"
+train_set.describe = train_set.describe %>% select(-c(1))
+head(train_set.describe)
+```
+
+
+###Removal of columns with more than 50% zeroes###
+```{r}
+##Removal of zeroes in train set##
+train_set.describe.zeros = data.frame(t(train_set.describe))%>%select(c(obs.count,zeros.count))
+train_set.describe.zeros$zero.percent = train_set.describe.zeros$zeros.count*100/train_set.describe.zeros$obs.count
+train_set.describe.zeros = arrange(train_set.describe.zeros, desc(zeros.count))
+plot(train_set.describe.zeros$zero.percent, main="Columns by number of zero values - Train Set", xlab = "Column Number", ylab = "% of Zeroes")
+train_set.many_zeros = train_set.describe.zeros%>%filter(zero.percent>=50)
+train_set.less_zeros = train_set.describe.zeros%>%filter(zero.percent<50)
+plot(train_set.less_zeros$zero.percent, main="Columns with less than 50% Zeroes - Train Set", xlab = "Column Number", ylab = "% of Zeroes")
+train_set.many_zeros_row_names = row.names(train_set.many_zeros)
+train_set.less_zero_subset = train_set[,!(names(train_set) %in% train_set.many_zeros_row_names)]
+head(train_set.less_zero_subset)
+boxplot(train_set.less_zero_subset[-c(1)], col = rainbow(ncol(train_set.less_zero_subset[-c(1)])), main="Box Plot with outlier - Train Set")
+
+siam_data_train.less_zero_subset = train_set[,!(names(train_set) %in% train_set.many_zeros_row_names)]
+
+siam_data_prem.less_zero_subset = prelim_set[,!(names(prelim_set) %in% train_set.many_zeros_row_names)]
+
+siam_data_test.less_zero_subset = test_set[,!(names(test_set) %in% train_set.many_zeros_row_names)]
+
+```
+
+###Outlier removal###
+```{r}
+#Outlier removal in train set##
+outlier.max_count = 0
+for(i in 2:ncol(train_set.less_zero_subset)) {       # for-loop over columns
+ out <- boxplot.stats(train_set.less_zero_subset[,i])$out
+ out.ind <- which(train_set.less_zero_subset[,i] %in% c(out))
+ if(length(out.ind)>outlier.max_count){
+   outlier.max_count = length(out.ind)
+ }
+}
+X1 = rep(NA, outlier.max_count)
+outlier.locations <- data.frame(X1)
+for(col in colnames(train_set.less_zero_subset)[-1]) {       # for-loop over columns
+ out <- boxplot.stats(t(train_set.less_zero_subset[col]))$out
+ out.ind <- which(t(train_set.less_zero_subset[col]) %in% c(out))
+ out.ind = append(out.ind, rep(NA, outlier.max_count-length(out.ind), after = length(out.ind)))
+ out.ind
+ 
+ outlier.locations[col] = out.ind
+}
+
+rows_to_remove = c()
+outlier.max_count = 0
+for(i in 1:nrow(outlier.locations)) {     
+ row = unname(unlist(outlier.locations[i,]))
+ row = row[!(row %in% c(NA))] #remove the Na's
+ uniqu_items = unique(unlist(row)) # get unique values
+
+ for(j in uniqu_items) {
+   mode_table = table(row)
+   occurrence_number = mode_table[names(mode_table)==j]
+   if(occurrence_number>=10){
+    rows_to_remove = append(rows_to_remove, j, after = length(rows_to_remove))
+   }
+ }
+}
+train_set.less_outlier = train_set.less_zero_subset[-rows_to_remove,]
+boxplot(train_set.less_outlier[-c(1)], col = rainbow(ncol(train_set.less_outlier[-c(1)])), main="Partial removal of outliers - Train Set")
+
+head(train_set.less_outlier)
+
+siam_data_train.clean = train_set.less_outlier
+table(siam_data_train.clean[1])
+
+```
+
+
+### Modelling
+
+```{r modelling}
+siam_data_train.clean$Y = as.factor(siam_data_train.clean$Y)
+set.seed(123)
+rf.siam_data = randomForest(Y~., data=siam_data_train.clean, ntree=100, proximity=T)
+rf.siam_data
+importance(rf.siam_data)
+plot(rf.siam_data)
+legend("right", colnames(rf.siam_data$err.rate),col=1:4,cex=0.8,fill=1:4)
+#varImpPlot(rf.siam_data)
+```
+
+```{r confusion_matrix}
+rf.test_result =predict(rf.siam_data ,newdata=siam_data_prem.less_zero_subset)
+CM = table(rf.test_result, siam_data_prem.less_zero_subset$Y)
+CM
+```
+
+```{r accuracy}
+accuracy = (sum(diag(CM)))/sum(CM)
+print(paste0("Accuracy: ", accuracy))
+
+Specificity = CM[1]/(CM[1]+CM[2])
+print(paste0("Specificity: ", Specificity))
+
+Sensitivity = CM[4]/(CM[3]+CM[4])
+print(paste0("Sensitivity: ", Sensitivity))
+
+
+```
+### Optimizations- SPOT
+```{r optimation_function}
+objfun <- function(X){
+  
+rf.siam_data = randomForest(Y~., data=siam_data_train.clean, ntree=X[1], proximity=X[2], mtry=X[3],classwt = c(X[4],X[5]),cutoff=c(X[6],1-X[6]), nodesize=X[7], sampsize=c('N'=X[8],'S'=X[9]))
+rf.test_result =predict(rf.siam_data ,newdata=siam_data_prem.less_zero_subset)
+CM = table(rf.test_result, siam_data_prem.less_zero_subset$Y)
+
+Specificity = CM[1]/(CM[1]+CM[2])
+Sensitivity = CM[4]/(CM[3]+CM[4])
+average = (Specificity+Sensitivity)/2
+acurancy = 1/average
+acurancy
+}
+
+```
+
+```{r optimation_spot}
+tunepars <- c("ntree","proximity","mtry","classwt_n","classwt_s","cutoff","nodesize","samplesize_n","samplesize_s")
+type <-  c("integer","integer","integer","numeric","numeric","numeric","integer","integer","integer")
+tuner.seed <- 1
+  
+lower <- c(50,0,4, 0.1,0.1,0.1,1,50,10)
+  upper <- c(200,1,20, 1,1,0.9,50,511,125)
+  
+  result <- spot(fun = objfun,
+               lower=lower,
+               upper=upper,
+               control = list(types=type,
+                              maxTime = 60, #in minutes
+                              plots=FALSE,
+                              progress = TRUE,
+                              optimizer=optimDE,
+                              noise=TRUE,
+                              seedFun=123,
+                              seedSPOT=tuner.seed,
+                              designControl=list(size=5*length(lower)),
+                              funEvals=Inf,
+                              optimizerControl=list(funEvals=100*length(lower))
+               )
+)
+```
+
+```{r optimization_result}
+print("Xbest values: ")
+print(paste0("ntree = ", result$xbest[1]))
+print(paste0("proximity = ",   result$xbest[2]))
+print(paste0("mtry = ",  result$xbest[3]))
+print(paste0("classwt = ", c(result$xbest[4],result$xbest[5])))
+print(paste0("cutoff = ", c(result$xbest[6],1-result$xbest[6])))
+print(paste0("nodesize = ", result$xbest[7]))
+print(paste0("sampsize = ",  c('N'=result$xbest[8],'S'=result$xbest[9])))
+print(paste0("Ybest = ", result$ybest))
+```
+
+
+### Evaluation
+
+```{r evaluation}
+#developing new model
+set.seed(123)
+
+ntree = result$xbest[1]
+proximity = result$xbest[2]
+mtry = result$xbest[3]
+classwt=c(result$xbest[4],result$xbest[5])
+cutoff=c(result$xbest[6],1-result$xbest[6])
+nodesize=result$xbest[7]
+sampsize = c('N'=result$xbest[8],'S'=result$xbest[9])
+
+rf.siam_data = randomForest(Y~., data=siam_data_train.clean, ntree=ntree, proximity=proximity, mtry=mtry,classwt = classwt,cutoff=cutoff, nodesize=nodesize, sampsize=sampsize)
+rf.siam_data
+plot(rf.siam_data)
+legend("right", colnames(rf.siam_data$err.rate),col=1:4,cex=0.8,fill=1:4)
+#varImpPlot(rf.siam_data)
+```
+
+### Balanced Youden Index - Impact of Optimization
+```{r test_data_evaluation_}
+rf.test_result =predict(rf.siam_data,newdata=siam_data_prem.less_zero_subset)
+CM = table(rf.test_result, siam_data_prem.less_zero_subset$Y)
+CM
+accuracy = (sum(diag(CM)))/sum(CM)
+print(paste0("Accuracy: ", accuracy))
+
+Specificity = CM[1]/(CM[1]+CM[2])
+print(paste0("Specificity: ", Specificity))
+
+Sensitivity = CM[4]/(CM[3]+CM[4])
+print(paste0("Sensitivity: ", Sensitivity))
+
+print(paste0("Balanced Youden index: ", min(Sensitivity,Specificity)))
+
+```
+
+```{r confusion_matrix_}
+rf.test_result =predict(rf.siam_data ,newdata=siam_data_test.less_zero_subset)
+CM = table(rf.test_result, siam_data_test.less_zero_subset$Y)
+CM
+accuracy = (sum(diag(CM)))/sum(CM)
+print(paste0("Accuracy: ", accuracy))
+
+Specificity = CM[1]/(CM[1]+CM[2])
+print(paste0("Specificity: ", Specificity))
+
+Sensitivity = CM[4]/(CM[3]+CM[4])
+print(paste0("Sensitivity: ", Sensitivity))
+
+print(paste0("Balanced Youden index: ", min(Sensitivity,Specificity)))
+```
+```{r accurancy_}
+accuracy = (sum(diag(CM)))/sum(CM)
+accuracy
+```
+
+
+
+##PROCEDURE FOLLOWED FOR MANUAL TUNING WITH DATA PREPARATION - COMBINED TRAINING SET##
+
+###Data Preparation on combined set - train + prelim set
+```{r}
+##Zero count in combined train set##
+full_train_set.describe = stat.desc(full_train_set)
+rownames(full_train_set.describe)[rownames(full_train_set.describe) == "nbr.null"] = "zeros.count"
+rownames(full_train_set.describe)[rownames(full_train_set.describe) == "nbr.val"] = "obs.count"
+full_train_set.describe = full_train_set.describe %>% select(-c(1))
+head(full_train_set.describe)
+
+
+##Removal of zeroes in combined train set##
+full_train_set.describe.zeros = data.frame(t(full_train_set.describe))%>%select(c(obs.count,zeros.count))
+full_train_set.describe.zeros$zero.percent = full_train_set.describe.zeros$zeros.count*100/full_train_set.describe.zeros$obs.count
+full_train_set.describe.zeros = arrange(full_train_set.describe.zeros, desc(zeros.count))
+plot(full_train_set.describe.zeros$zero.percent, main="Columns by number of zero values - Combined Train Set", xlab = "Column Number", ylab = "% of Zeroes")
+full_train_set.many_zeros = full_train_set.describe.zeros%>%filter(zero.percent>=50)
+full_train_set.less_zeros = full_train_set.describe.zeros%>%filter(zero.percent<50)
+plot(full_train_set.less_zeros$zero.percent, main="Columns with less than 50% Zeroes - Combined Train Set", xlab = "Column Number", ylab = "% of Zeroes")
+full_train_set.many_zeros_row_names = row.names(full_train_set.many_zeros)
+full_train_set.less_zero_subset = full_train_set[,!(names(full_train_set) %in% full_train_set.many_zeros_row_names)]
+head(full_train_set.less_zero_subset)
+boxplot(full_train_set.less_zero_subset[-c(1)], col = rainbow(ncol(full_train_set.less_zero_subset[-c(1)])), main="Box Plot with outlier - Combined Train Set")
+
+#Outlier removal in combined train set##
+outlier.max_count = 0
+for(i in 2:ncol(full_train_set.less_zero_subset)) {       # for-loop over columns
+ out <- boxplot.stats(full_train_set.less_zero_subset[,i])$out
+ out.ind <- which(full_train_set.less_zero_subset[,i] %in% c(out))
+ if(length(out.ind)>outlier.max_count){
+   outlier.max_count = length(out.ind)
+ }
+}
+X1 = rep(NA, outlier.max_count)
+outlier.locations <- data.frame(X1)
+for(col in colnames(full_train_set.less_zero_subset)[-1]) {       # for-loop over columns
+ out <- boxplot.stats(t(full_train_set.less_zero_subset[col]))$out
+ out.ind <- which(t(full_train_set.less_zero_subset[col]) %in% c(out))
+ out.ind = append(out.ind, rep(NA, outlier.max_count-length(out.ind), after = length(out.ind)))
+ out.ind
+ 
+ outlier.locations[col] = out.ind
+}
+
+rows_to_remove = c()
+outlier.max_count = 0
+for(i in 1:nrow(outlier.locations)) {     
+ row = unname(unlist(outlier.locations[i,]))
+ row = row[!(row %in% c(NA))] #remove the Na's
+ uniqu_items = unique(unlist(row)) # get unique values
+
+ for(j in uniqu_items) {
+   mode_table = table(row)
+   occurrence_number = mode_table[names(mode_table)==j]
+   if(occurrence_number>=10){
+    rows_to_remove = append(rows_to_remove, j, after = length(rows_to_remove))
+   }
+ }
+}
+full_train_set.less_outlier = full_train_set.less_zero_subset[-rows_to_remove,]
+
+boxplot(full_train_set.less_outlier[-c(1)], col = rainbow(ncol(full_train_set.less_outlier[-c(1)])), main="Partial removal of outliers - Combined Train Set")
+head(full_train_set.less_outlier)
+
+```
+
+###Data Preparation on Test set
+```{r}
+##Zero count in Test set##
+test_set.describe = stat.desc(test_set)
+rownames(test_set.describe)[rownames(test_set.describe) == "nbr.null"] = "zeros.count"
+rownames(test_set.describe)[rownames(test_set.describe) == "nbr.val"] = "obs.count"
+test_set.describe = test_set.describe %>% select(-c(1))
+head(test_set.describe)
+
+##Removal of zeroes in test set##
+test_set.describe.zeros = data.frame(t(test_set.describe))%>%select(c(obs.count,zeros.count))
+test_set.describe.zeros$zero.percent = test_set.describe.zeros$zeros.count*100/test_set.describe.zeros$obs.count
+test_set.describe.zeros = arrange(test_set.describe.zeros, desc(zeros.count))
+plot(test_set.describe.zeros$zero.percent, main="Columns by number of zero values - Test Set", xlab = "Column Number", ylab = "% of Zeroes")
+test_set.many_zeros = test_set.describe.zeros%>%filter(zero.percent>=50)
+test_set.less_zeros = test_set.describe.zeros%>%filter(zero.percent<50)
+plot(test_set.less_zeros$zero.percent, main="Columns with less than 50% Zeroes - Test Set", xlab = "Column Number", ylab = "% of Zeroes")
+test_set.many_zeros_row_names = row.names(test_set.many_zeros)
+test_set.less_zero_subset = test_set[,!(names(test_set) %in% test_set.many_zeros_row_names)]
+head(test_set.less_zero_subset)
+boxplot(test_set.less_zero_subset[-c(1)], col = rainbow(ncol(test_set.less_zero_subset[-c(1)])), main="Box Plot with outlier - Test Set")
+
+#Outlier removal in Test set##
+outlier.max_count = 0
+for(i in 2:ncol(test_set.less_zero_subset)) {       # for-loop over columns
+ out <- boxplot.stats(test_set.less_zero_subset[,i])$out
+ out.ind <- which(test_set.less_zero_subset[,i] %in% c(out))
+ if(length(out.ind)>outlier.max_count){
+   outlier.max_count = length(out.ind)
+ }
+}
+X1 = rep(NA, outlier.max_count)
+outlier.locations <- data.frame(X1)
+for(col in colnames(test_set.less_zero_subset)[-1]) {       # for-loop over columns
+ out <- boxplot.stats(t(test_set.less_zero_subset[col]))$out
+ out.ind <- which(t(test_set.less_zero_subset[col]) %in% c(out))
+ out.ind = append(out.ind, rep(NA, outlier.max_count-length(out.ind), after = length(out.ind)))
+ out.ind
+ 
+ outlier.locations[col] = out.ind
+}
+
+rows_to_remove = c()
+outlier.max_count = 0
+for(i in 1:nrow(outlier.locations)) {     
+ row = unname(unlist(outlier.locations[i,]))
+ row = row[!(row %in% c(NA))] #remove the Na's
+ uniqu_items = unique(unlist(row)) # get unique values
+
+ for(j in uniqu_items) {
+   mode_table = table(row)
+   occurrence_number = mode_table[names(mode_table)==j]
+   if(occurrence_number>=10){
+    rows_to_remove = append(rows_to_remove, j, after = length(rows_to_remove))
+   }
+ }
+}
+test_set.less_outlier = test_set.less_zero_subset[-rows_to_remove,]
+
+boxplot(test_set.less_outlier[-c(1)], col = rainbow(ncol(test_set.less_outlier[-c(1)])), main="Partial removal of outliers - Test Set")
+head(test_set.less_outlier)
+
+```
+
+###Modelling - Tuning hyperparameter manually
+```{r}
+#Model
+train_tbl = table(full_train_set.less_outlier$Y)
+test_tbl = table(test_set.less_outlier$Y)
+train_tbl
+test_tbl
+
+set.seed(134)
+rf_final <- randomForest(Y ~ ., data=full_train_set.less_outlier, ntree=1000, mtry=16, nodesize=1, cutoff = c(0.43,0.13), classwt= c(15,1), samplesize= c(440,90), positive ="S")
+rf_final
+
+```
+
+###Prediction on test set
+```{r}
+#test_set.less_outlier
+pred <- predict(rf_final, test_set.less_outlier[-1])
+pred <- transform(pred, pred = as.factor(pred))
+Conf_Matr = confusionMatrix(pred$pred, test_set.less_outlier$Y, positive = "S")
+Conf_Matr
+
+#str(Conf_Matr)
+CM_class <- Conf_Matr$byClass
+#CM_class
+
+Sensitivity <- CM_class[['Sensitivity']]
+Specificity <- CM_class[['Specificity']]
+```
+
+###Balanced Youden Index
+```{r}
+Youden_Ind = Sensitivity + Specificity - 1
+Balanced_YI = Sensitivity + Specificity - abs(Sensitivity - Specificity)
+
+print("Youden Index: ")
+Youden_Ind
+
+print("Balanced Youden Index is: ")
+BYI
+```
+###ROC Plot
+```{r}
+pred_num<-as.numeric(pred$pred)
+act_num<-as.numeric(test_set.less_outlier$Y)
+
+predob <- prediction(pred_num, act_num)
+predob
+perf <- ROCR::performance(predob,"tpr","fpr")
+plot(perf, main = "ROC Plot")
+
+
+abline(a=0,b=1, col = "blue", lty = "dashed", )
+legend(0, 1, legend=c("ROC curve", "AUC curve"),
+       col=c("black", "blue"), lty=1:2, cex=0.8)
+#abline()
+
+```
+# COMPARISON WITH SVM
+
+```{r}
+library(e1071)
+model <- svm(Y~., data=full_train_set.less_outlier)
+summary(model)
+model
+```
+
+```{r}
+#checking performance on train data
+pred_SVM <- predict(model, full_train_set.less_outlier)
+Conf_Matr_SVM = confusionMatrix(pred_SVM, full_train_set.less_outlier$Y, positive = "S")
+Conf_Matr_SVM
+```
+
+```{r}
+# performance on test data
+pred_SVM_test <- predict(model, test_set.less_outlier[-1])
+Conf_Matr_SVMT = confusionMatrix(pred_SVM_test, test_set.less_outlier$Y, positive = "S")
+Conf_Matr_SVMT
+
+```
+
+
+
+
+
+
+
+
+
+
+
